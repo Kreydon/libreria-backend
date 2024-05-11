@@ -12,7 +12,7 @@ const _ = require("lodash");
 
 async function readBookIDController(data) {
   const search = await readBookIDAction(data);
-  if (!search || !search.activo) {
+  if (!search || !search.isActive) {
     throw new Error("The book doesn't exist");
   }
   return search;
@@ -50,10 +50,10 @@ async function deleteBookController(data, token) {
   const userID = decodedToken._id;
   const bookInfo = await readBookIDController(data);
 
-  if (_.isEqual(userID, bookInfo.userID) === false) {
+  if (_.isEqual(userID, bookInfo.userID.toString()) === false) {
     throw new Error("You don't have permissions to delete this book");
   }
-  if (!bookInfo.activo) {
+  if (!bookInfo.isActive) {
     throw new Error("This book has already been deleted");
   }
   const deleting = await deleteBookAction(data);

@@ -6,7 +6,6 @@ dotenv.config();
 
 async function login(data) {
   const validation = await getUser(data.email);
-  console.log("🚀 ~ login ~ validation:", validation);
   if (
     validation.email === data.email &&
     (await passValidate(data.password, validation.password))
@@ -25,7 +24,7 @@ async function login(data) {
       _id: validation._id,
     };
   } else {
-    throw new Error("Usuario o contraseña incorrectos");
+    throw new Error("Incorrect user or password");
   }
 }
 async function passValidate(pass, hash) {
