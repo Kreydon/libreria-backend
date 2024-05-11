@@ -1,0 +1,24 @@
+{
+  "name": "ProyectoBackEnd",
+  "version": "1.0.0",
+  "description": "This project involves developing an API for an e-commerce platform focused on books.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "argon2": "^0.40.1",
+    "axios": "^1.6.8",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "httperror": "^0.2.3",
+    "jsonwebtoken": "^9.0.2",
+    "lodash": "^4.17.21",
+    "mongoose": "^8.3.2",
+    "nodemon": "^3.1.0"
+  }
+}
