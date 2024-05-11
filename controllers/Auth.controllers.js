@@ -6,6 +6,7 @@ dotenv.config();
 
 async function login(data) {
   const validation = await getUser(data.email);
+  console.log("🚀 ~ login ~ validation:", validation);
   if (
     validation.email === data.email &&
     (await passValidate(data.password, validation.password))

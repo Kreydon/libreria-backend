@@ -3,9 +3,9 @@ const dotend = require("dotenv");
 dotend.config();
 const _ = require("lodash");
 const readBookIDController =
-  require("../Controllers/Libros").readBookIDController;
+  require("../controllers/Books.controllers").readBookIDController;
 const updateBookController =
-  require("../Controllers/Libros").updateBookController;
+  require("../controllers/Books.controllers").updateBookController;
 const {
   readOrderIDAction,
   readOrdersAction,

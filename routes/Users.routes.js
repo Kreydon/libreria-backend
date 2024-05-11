@@ -51,7 +51,7 @@ async function patchUsersRoute(req, res) {
     const users = await updateUserController(req.body, token);
 
     if (users.modifiedCount === 0) {
-      throw new Error("It wasn't possible to create the user");
+      throw new Error("It wasn't possible to update the user");
     }
     res.status(200).json({ mensaje: "The user has been successfully updated" });
   } catch (error) {
@@ -85,7 +85,7 @@ async function deleteUsersRoute(req, res) {
 router.get("/:id", getUserIDRoute);
 router.get("/", getUsersRoute);
 router.post("/", postUsersRoute);
-router.patch("/", patchUsersRoute);
+router.patch("/:id", patchUsersRoute);
 router.delete("/:id", deleteUsersRoute);
 
 module.exports = router;

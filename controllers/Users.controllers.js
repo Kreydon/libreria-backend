@@ -15,7 +15,6 @@ async function readUserIDController(data) {
   if (!search || !search.isActive) {
     throw new Error("User not found");
   }
-
   return search;
 }
 
@@ -41,9 +40,11 @@ async function createUserController(data) {
 
 async function updateUserController(data, token) {
   const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken.cedula;
-  const userExists = await readUserIDAction(userID);
-  if (!userExists || !userExists.isActive) {
+  const userID = decodedToken._id;
+  const userInfo = await readUserIDAction(userID);
+  console.log("🚀 ~ updateUserController ~ userExists:", userInfo);
+
+  if (!userInfo || !userInfo.isActive) {
     throw new Error("User not found");
   }
   const update = await updateUserAction(userID, data);
@@ -53,7 +54,7 @@ async function updateUserController(data, token) {
 
 async function deleteUserController(data, token) {
   const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken.cedula;
+  const userID = decodedToken._id;
   if (userID !== data) {
     throw new Error("User not found");
   }
