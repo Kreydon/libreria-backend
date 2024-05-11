@@ -6,11 +6,10 @@ const emailRegex =
 const usersSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    cedula: { type: String, required: true, unique: true },
+    cedula: { type: String, required: true },
     email: {
       type: String,
       required: true,
-      unique: true,
       validate: {
         validator: function (v) {
           return emailRegex.test(v);

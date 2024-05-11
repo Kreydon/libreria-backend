@@ -5,6 +5,7 @@ dotend.config();
 const {
   readUserIDAction,
   readUsersAction,
+  verifyUsersAction,
   createUserAction,
   updateUserAction,
   deleteUserAction,
@@ -28,21 +29,22 @@ async function readUsersController() {
 }
 
 async function createUserController(data) {
-  const cedula = data.cedula;
-  const user = await readUsersAction(cedula);
-  if (user && user.isActive) {
-    throw new Error("This user already exists");
-  }
-  const creation = await createUserAction(data);
+  // Verifica si ya existe un usuario activo con la misma cédula
+  const isActiveUserExists = await verifyUsersAction(data.cedula);
 
-  return creation;
+  if (isActiveUserExists) {
+    throw new Error("The user already exists.");
+  }
+
+  // Si no existe, procede a crear el nuevo usuario
+  const newUser = await createUserAction(data);
+  return newUser;
 }
 
 async function updateUserController(data, token) {
   const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
   const userID = decodedToken._id;
   const userInfo = await readUserIDAction(userID);
-  console.log("🚀 ~ updateUserController ~ userExists:", userInfo);
 
   if (!userInfo || !userInfo.isActive) {
     throw new Error("User not found");
@@ -56,7 +58,9 @@ async function deleteUserController(data, token) {
   const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
   const userID = decodedToken._id;
   if (userID !== data) {
-    throw new Error("User not found");
+    throw new Error(
+      "User not found or don't have permisson to delete the user"
+    );
   }
   const userExists = await readUserIDAction(userID);
 

@@ -5,13 +5,22 @@ async function readUserIDAction(data) {
 
   // Utilizamos una expresión regular simple para verificar si 'data' tiene formato de correo electrónico
   if (/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(data)) {
-    // Si data es un correo electrónico, realiza la búsqueda por 'cedula' o 'correo'
+    // Si data es un correo electrónico, realiza la búsqueda por 'cedula' o 'correo' y verifica que el usuario esté activo
     user = await User.findOne({
-      $or: [{ cedula: data }, { email: data }],
+      $or: [
+        { cedula: data, isActive: true },
+        { email: data, isActive: true },
+      ],
     }).lean();
   } else {
-    // Si no es un correo electrónico, asumimos que es un ID y realizamos la búsqueda por '_id'
-    user = await User.findById(data, { _id: 0 }).lean(); // Usamos 'lean' para optimizar la consulta
+    // Si no es un correo electrónico, asumimos que es un ID y realizamos la búsqueda por '_id' asegurando que el usuario esté activo
+    user = await User.findOne(
+      {
+        _id: data,
+        isActive: true,
+      },
+      { _id: 0 }
+    ).lean(); // Usamos 'lean' para optimizar la consulta y { _id: 0 } para excluir el campo '_id'
   }
 
   return user; // Devuelve el documento encontrado o 'null' si no se encuentra
@@ -20,6 +29,16 @@ async function readUserIDAction(data) {
 async function readUsersAction() {
   const users = await User.find();
   return users;
+}
+
+async function verifyUsersAction(cedula) {
+  // Busca todos los usuarios con la misma cédula
+  const usersWithSameCedula = await User.find({ cedula: cedula }).lean();
+
+  // Verifica si alguno de los usuarios encontrados está activo
+  const isActiveUserExists = usersWithSameCedula.some((user) => user.isActive);
+
+  return isActiveUserExists;
 }
 
 async function createUserAction(data) {
@@ -64,6 +83,7 @@ async function deleteUserAction(userID) {
 module.exports = {
   readUserIDAction,
   readUsersAction,
+  verifyUsersAction,
   createUserAction,
   updateUserAction,
   deleteUserAction,
