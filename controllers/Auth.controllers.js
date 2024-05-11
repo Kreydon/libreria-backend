@@ -4,29 +4,34 @@ const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
 
-async function login(data) {
-  const validation = await getUser(data.email);
-  if (
-    validation.email === data.email &&
-    (await passValidate(data.password, validation.password))
-  ) {
-    const token = jwt.sign(
-      { _id: validation._id, email: data.email, cedula: validation.cedula },
-      process.env.SECRET_KEY,
-      {
-        expiresIn: "1h",
-      }
-    );
+async function login(credentials) {
+  const userFound = await getUser(credentials.email);
+  const isValidLogin =
+    userFound.email === credentials.email &&
+    (await passValidate(credentials.password, userFound.password));
+
+  if (isValidLogin) {
+    const payload = {
+      _id: userFound._id,
+      email: credentials.email,
+      cedula: userFound.cedula,
+    };
+
+    const authToken = jwt.sign(payload, process.env.SECRET_KEY, {
+      expiresIn: "1h",
+    });
+
     return {
-      token: token,
-      email: data.email,
-      cedula: validation.cedula,
-      _id: validation._id,
+      token: authToken,
+      email: payload.email,
+      cedula: payload.cedula,
+      _id: payload._id,
     };
   } else {
     throw new Error("Incorrect user or password");
   }
 }
+
 async function passValidate(pass, hash) {
   return await argon2.verify(hash, pass);
 }

@@ -11,21 +11,21 @@ const {
   deleteUserAction,
 } = require("../actions/Users.actions");
 
-async function readUserIDController(data) {
-  const search = await readUserIDAction(data);
-  if (!search || !search.isActive) {
+async function readUserIDController(inputData) {
+  const userResult = await readUserIDAction(inputData);
+  if (!userResult || userResult.isActive === false) {
     throw new Error("User not found");
   }
-  return search;
+  return userResult;
 }
 
 async function readUsersController() {
-  const search = await readUsersAction();
-  if (!search) {
-    throw new Error("Usuarios no encontrados");
+  const result = await readUsersAction();
+  if (result === null) {
+    throw new Error("No se encontraron usuarios");
   }
 
-  return search;
+  return result;
 }
 
 async function createUserController(data) {
@@ -41,35 +41,45 @@ async function createUserController(data) {
   return newUser;
 }
 
-async function updateUserController(data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const userInfo = await readUserIDAction(userID);
+async function updateUserController(updateData, authToken) {
+  const tokenDetails = jwt.verify(authToken, process.env.SECRET_KEY);
+  const userIdentifier = tokenDetails._id;
+  const currentUserInfo = await readUserIDAction(userIdentifier);
 
-  if (!userInfo || !userInfo.isActive) {
-    throw new Error("User not found");
+  if (!currentUserInfo || !currentUserInfo.isActive) {
+    throw new Error("Cannot locate active user");
   }
-  const update = await updateUserAction(userID, data);
 
-  return update;
+  // Verificar que no se intenten cambiar la cédula, el email o la contraseña
+  if (updateData.cedula || updateData.email || updateData.password) {
+    throw new Error("Modification of cedula, email, or password isn't allowed");
+  }
+
+  const updatedUserInfo = await updateUserAction(userIdentifier, updateData);
+
+  return updatedUserInfo;
 }
 
-async function deleteUserController(data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  if (userID !== data) {
-    throw new Error(
-      "User not found or don't have permisson to delete the user"
-    );
-  }
-  const userExists = await readUserIDAction(userID);
+async function deleteUserController(userIdentifier, authToken) {
+  const verifiedToken = jwt.verify(authToken, process.env.SECRET_KEY);
+  const loggedInUserId = verifiedToken._id;
 
-  if (!userExists || !userExists.isActive) {
-    throw new Error("User not found or has already been deleted");
+  // Verificar si el ID del usuario en el token coincide con el ID proporcionado
+  if (loggedInUserId !== userIdentifier) {
+    throw new Error("Unable to locate user or permission denied for deletion");
   }
-  const deleting = await deleteUserAction(data);
 
-  return deleting;
+  // Confirmar que el usuario exista y esté activo
+  const activeUser = await readUserIDAction(loggedInUserId);
+
+  if (!activeUser || !activeUser.isActive) {
+    throw new Error("No active user found or user has been previously removed");
+  }
+
+  // Proceso para eliminar el usuario
+  const result = await deleteUserAction(userIdentifier);
+
+  return result;
 }
 
 module.exports = {
