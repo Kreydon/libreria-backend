@@ -1,4 +1,4 @@
-const User = require("../models/UsersAction.models");
+const User = require("../models/Users.models");
 
 async function readUserIDAction(data) {
   const user = await User.findOne({
