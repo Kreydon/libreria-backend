@@ -92,7 +92,7 @@ async function deleteOrdersRoute(req, res) {
 router.get("/:id", getOrderIDRoute);
 router.get("/", getOrdersRoute);
 router.post("/", postOrdersRoute);
-router.patch("/", patchOrdersRoute);
+router.patch("/:id", patchOrdersRoute);
 router.delete("/:id", deleteOrdersRoute);
 
 module.exports = router;

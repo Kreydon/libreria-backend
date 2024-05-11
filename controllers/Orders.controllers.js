@@ -63,7 +63,7 @@ async function updateOrderController(orderID, data, token) {
   const booksPromise = bookID.map((book) => readBookIDController(book));
   const books = await Promise.all(booksPromise);
 
-  const currentBooks = books.filter((book) => book.activo);
+  const currentBooks = books.filter((book) => book.isActive);
   if (currentBooks.length !== bookID.length) {
     throw new Error("Some books have already been sold");
   }
@@ -78,7 +78,7 @@ async function updateOrderController(orderID, data, token) {
   const update = await updateOrderAction(orderID, data);
   for (const book of books) {
     console.log(book);
-    await updateBookController(book._id, { activo: false }, token);
+    await updateBookController(book._id, { isActive: false }, token);
   }
   return update;
 }
