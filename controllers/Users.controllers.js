@@ -43,8 +43,8 @@ async function createUserController(data) {
 
 async function updateUserController(updateData, authToken) {
   const tokenDetails = jwt.verify(authToken, process.env.SECRET_KEY);
-  const userIdentifier = tokenDetails._id;
-  const currentUserInfo = await readUserIDAction(userIdentifier);
+  const userID = tokenDetails._id;
+  const currentUserInfo = await readUserIDAction(userID);
 
   if (!currentUserInfo || !currentUserInfo.isActive) {
     throw new Error("Cannot locate active user");
@@ -55,29 +55,29 @@ async function updateUserController(updateData, authToken) {
     throw new Error("Modification of cedula, email, or password isn't allowed");
   }
 
-  const updatedUserInfo = await updateUserAction(userIdentifier, updateData);
+  const updatedUserInfo = await updateUserAction(userID, updateData);
 
   return updatedUserInfo;
 }
 
-async function deleteUserController(userIdentifier, authToken) {
+async function deleteUserController(userID, authToken) {
   const verifiedToken = jwt.verify(authToken, process.env.SECRET_KEY);
-  const loggedInUserId = verifiedToken._id;
+  const loggedInUserID = verifiedToken._id;
 
   // Verificar si el ID del usuario en el token coincide con el ID proporcionado
-  if (loggedInUserId !== userIdentifier) {
+  if (loggedInUserID !== userID) {
     throw new Error("Unable to locate user or permission denied for deletion");
   }
 
   // Confirmar que el usuario exista y esté activo
-  const activeUser = await readUserIDAction(loggedInUserId);
+  const activeUser = await readUserIDAction(loggedInUserID);
 
   if (!activeUser || !activeUser.isActive) {
     throw new Error("No active user found or user has been previously removed");
   }
 
   // Proceso para eliminar el usuario
-  const result = await deleteUserAction(userIdentifier);
+  const result = await deleteUserAction(userID);
 
   return result;
 }

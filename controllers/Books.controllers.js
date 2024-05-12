@@ -10,54 +10,54 @@ const {
 } = require("../actions/Books.actions");
 const _ = require("lodash");
 
-async function readBookIDController(data) {
-  const search = await readBookIDAction(data);
-  if (!search || !search.isActive) {
-    throw new Error("The book doesn't exist");
+async function readBookIDController(bookId) {
+  const bookResult = await readBookIDAction(bookId);
+  if (!bookResult || !bookResult.isActive) {
+    throw new Error("No active book found with provided ID");
   }
-  return search;
+  return bookResult;
 }
 
-async function readBooksController(data) {
-  const search = await readBooksAction(data);
-  if (search.length === 0) {
-    throw new Error("No books found");
+async function readBooksController(queryParams) {
+  const foundBooks = await readBooksAction(queryParams);
+  if (foundBooks.length === 0) {
+    throw new Error("No books available with the given criteria");
   }
-  return search;
+  return foundBooks;
 }
 
-async function createBookController(data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const creation = await createBookAction(userID, data);
-  return creation;
+async function createBookController(bookData, authToken) {
+  const verifiedToken = jwt.verify(authToken, process.env.SECRET_KEY);
+  const userID = verifiedToken._id;
+  const newBook = await createBookAction(userID, bookData);
+  return newBook;
 }
 
-async function updateBookController(bookID, data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const bookInfo = await readBookIDController(bookID);
+async function updateBookController(bookID, updateData, authenticationToken) {
+  const verifiedToken = jwt.verify(authenticationToken, process.env.SECRET_KEY);
+  const authorID = verifiedToken._id;
+  const existingBookDetails = await readBookIDController(bookID);
 
-  if (_.toString(bookInfo.userID) !== userID) {
-    throw new Error("You don't have permissions to make updates to this book");
+  if (_.toString(existingBookDetails.userID) !== authorID) {
+    throw new Error("Unauthorized: You cannot update this book.");
   }
-  const update = await updateBookAction(bookInfo, data);
-  return update;
+  const updatedBook = await updateBookAction(existingBookDetails, updateData);
+  return updatedBook;
 }
 
-async function deleteBookController(data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const bookInfo = await readBookIDController(data);
+async function deleteBookController(bookID, authenticationToken) {
+  const verifiedToken = jwt.verify(authenticationToken, process.env.SECRET_KEY);
+  const userIdentifier = verifiedToken._id;
+  const bookDetails = await readBookIDController(bookID);
 
-  if (_.isEqual(userID, bookInfo.userID.toString()) === false) {
-    throw new Error("You don't have permissions to delete this book");
+  if (!_.isEqual(userIdentifier, bookDetails.userID.toString())) {
+    throw new Error("Permission denied to delete this book");
   }
-  if (!bookInfo.isActive) {
+  if (!bookDetails.isActive) {
     throw new Error("This book has already been deleted");
   }
-  const deleting = await deleteBookAction(data);
-  return deleting;
+  const deletionResult = await deleteBookAction(bookID);
+  return deletionResult;
 }
 
 module.exports = {
