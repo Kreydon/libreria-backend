@@ -3,6 +3,11 @@ const dotend = require("dotenv");
 dotend.config();
 const {
   readBookIDAction,
+  filterBooksByGenreAction,
+  filterBooksByPublicationDateAction,
+  filterBooksByEditorialAction,
+  filterBooksByAuthorAction,
+  filterBooksByNameAction,
   readBooksAction,
   createBookAction,
   updateBookAction,
@@ -16,6 +21,50 @@ async function readBookIDController(bookId) {
     throw new Error("No active book found with provided ID");
   }
   return bookResult;
+}
+
+async function readBooksByGenreController(genre) {
+  const books = await filterBooksByGenreAction(genre);
+  if (!books.length) {
+    throw new Error("No active books found for the specified genre");
+  }
+  return books.filter((book) => book.isActive);
+}
+
+async function readBooksByPublicationDateController(publicationDate) {
+  const books = await filterBooksByPublicationDateAction(publicationDate);
+  if (!books.length) {
+    throw new Error(
+      "No active books found with the specified publication date"
+    );
+  }
+  return books.filter((book) => book.isActive);
+}
+
+async function readBooksByEditorialController(editorial) {
+  const books = await filterBooksByEditorialAction(editorial);
+  if (!books.length) {
+    throw new Error(
+      "No active books found published by the specified editorial"
+    );
+  }
+  return books.filter((book) => book.isActive);
+}
+
+async function readBooksByAuthorController(author) {
+  const books = await filterBooksByAuthorAction(author);
+  if (!books.length) {
+    throw new Error("No active books found by the specified author");
+  }
+  return books.filter((book) => book.isActive);
+}
+
+async function readBooksByNameController(name) {
+  const books = await filterBooksByNameAction(name);
+  if (!books.length) {
+    throw new Error("No active books found with the specified name");
+  }
+  return books.filter((book) => book.isActive);
 }
 
 async function readBooksController(queryParams) {
@@ -62,6 +111,11 @@ async function deleteBookController(bookID, authenticationToken) {
 
 module.exports = {
   readBookIDController,
+  readBooksByGenreController,
+  readBooksByPublicationDateController,
+  readBooksByEditorialController,
+  readBooksByAuthorController,
+  readBooksByNameController,
   readBooksController,
   createBookController,
   updateBookController,

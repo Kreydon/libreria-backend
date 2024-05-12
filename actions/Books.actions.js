@@ -5,6 +5,33 @@ async function readBookIDAction(id) {
   return book;
 }
 
+async function filterBooksByGenreAction(genre) {
+  const booksByGenre = await Book.find({ genre: genre });
+  return booksByGenre;
+}
+
+async function filterBooksByPublicationDateAction(publicationDate) {
+  const booksByDate = await Book.find({ publicationDate: publicationDate });
+  return booksByDate;
+}
+
+async function filterBooksByEditorialAction(editorial) {
+  const booksByEditorial = await Book.find({ editorial: editorial });
+  return booksByEditorial;
+}
+
+async function filterBooksByAuthorAction(author) {
+  const booksByAuthor = await Book.find({ author: author });
+  return booksByAuthor;
+}
+
+async function filterBooksByNameAction(name) {
+  const booksByName = await Book.find({
+    name: { $regex: name, $options: "i" },
+  }); // Utiliza expresión regular para búsqueda insensible a mayúsculas
+  return booksByName;
+}
+
 async function readBooksAction(query) {
   const books = Book.find(query);
   return books;
@@ -26,6 +53,11 @@ async function deleteBookAction(id) {
 
 module.exports = {
   readBookIDAction,
+  filterBooksByGenreAction,
+  filterBooksByPublicationDateAction,
+  filterBooksByEditorialAction,
+  filterBooksByAuthorAction,
+  filterBooksByNameAction,
   readBooksAction,
   createBookAction,
   updateBookAction,
