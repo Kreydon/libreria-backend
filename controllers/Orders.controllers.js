@@ -8,6 +8,8 @@ const updateBookController =
   require("../controllers/Books.controllers").updateBookController;
 const {
   readOrderIDAction,
+  filterOrdersByDateAction,
+  filterOrdersByStateAction,
   readOrdersAction,
   createOrderAction,
   updateOrderAction,
@@ -22,24 +24,40 @@ async function readOrderIDController(data) {
   return order;
 }
 
+async function filterOrdersByDateController(startDate, endDate) {
+  const orders = await filterOrdersByDateAction(startDate, endDate);
+  if (orders.length === 0) {
+    throw new Error("No orders found within the given date range");
+  }
+  return orders;
+}
+
+async function filterOrdersByStateController(state) {
+  const orders = await filterOrdersByStateAction(state);
+  if (orders.length === 0) {
+    throw new Error("No orders found with the specified state");
+  }
+  return orders;
+}
+
 async function readOrdersController() {
   const orders = await readOrdersAction();
   return orders;
 }
 
 async function createOrderController(data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
+  const verifiedToken = jwt.verify(token, process.env.SECRET_KEY);
+  const userID = verifiedToken._id;
   const booksPromise = data.libros.map((book) => readBookIDController(book));
   const books = await Promise.all(booksPromise);
 
   const total = books.reduce((acum, book) => acum + book.price, 0);
-  const creation = await createOrderAction(userID, total, data.libros);
-  return creation;
+  const newOrder = await createOrderAction(userID, total, data.books);
+  return newOrder;
 }
 
 async function updateCancel(orderInfo, orderID, data) {
-  if (orderInfo.estado === "cancel" && data === "cancel") {
+  if (orderInfo.state === "cancel" && data === "cancel") {
     throw new Error("This order has already been cancel");
   }
 
@@ -47,59 +65,68 @@ async function updateCancel(orderInfo, orderID, data) {
   return update;
 }
 
-async function updateOrderController(orderID, data, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const orderInfo = await readOrderIDAction(orderID);
+async function updateOrderController(orderId, updateData, authenticationToken) {
+  const tokenDetails = jwt.verify(authenticationToken, process.env.SECRET_KEY);
+  const orderUser = tokenDetails._id;
+  const orderDetails = await readOrderIDAction(orderId);
 
-  if (_.toString(orderInfo.userID) === userID && data.state === "cancel") {
-    if (orderInfo.state === "cancel") {
-      throw new Error("The cancellation of this order has already been made.");
+  if (
+    _.toString(orderDetails.userID) === orderUser &&
+    updateData.state === "cancel"
+  ) {
+    if (orderDetails.state === "cancel") {
+      throw new Error("This order is already canceled");
     }
-    return updateCancel(orderInfo, orderID, data);
+    return updateCancel(orderDetails, orderId, updateData);
   }
 
-  const bookID = orderInfo.books.map((book) => book.bookID);
-  const booksPromise = bookID.map((book) => readBookIDController(book));
-  const books = await Promise.all(booksPromise);
+  const bookIds = orderDetails.books.map((book) => book.bookID);
+  const bookFetchPromises = bookIds.map((id) => readBookIDController(id));
+  const retrievedBooks = await Promise.all(bookFetchPromises);
 
-  const currentBooks = books.filter((book) => book.isActive);
-  if (currentBooks.length !== bookID.length) {
-    throw new Error("Some books have already been sold");
+  const activeBooks = retrievedBooks.filter((book) => book.isActive);
+  if (activeBooks.length !== bookIds.length) {
+    throw new Error("One or more books are no longer available");
   }
 
-  const usersBooks = books.filter((book) => _.toString(book.userID) === userID);
-  if (usersBooks.length !== bookID.length) {
-    throw new Error(
-      "Cannot be updated because there are books that do not belong to you"
+  const userOwnedBooks = retrievedBooks.filter(
+    (book) => _.toString(book.userID) === orderUser
+  );
+  if (userOwnedBooks.length !== bookIds.length) {
+    throw new Error("You don't own one or more of these books");
+  }
+
+  const updateResult = await updateOrderAction(orderId, updateData);
+  for (const book of retrievedBooks) {
+    console.log(book);
+    await updateBookController(
+      book._id,
+      { isActive: false },
+      authenticationToken
     );
   }
-
-  const update = await updateOrderAction(orderID, data);
-  for (const book of books) {
-    console.log(book);
-    await updateBookController(book._id, { isActive: false }, token);
-  }
-  return update;
+  return updateResult;
 }
 
 async function deleteOrderController(orderID, token) {
-  const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
-  const userID = decodedToken._id;
-  const orderInfo = await readOrderIDController(orderID);
+  const verifiedToken = jwt.verify(token, process.env.SECRET_KEY);
+  const requestorId = verifiedToken._id;
+  const orderDetails = await readOrderIDController(orderID);
 
-  if (!orderInfo) {
-    throw new Error("Order not found");
+  if (!orderDetails) {
+    throw new Error("Order does not exist");
   }
-  if (_.toString(orderInfo.userID) !== userID) {
-    throw new Error("You don't have permission to delete the order");
+  if (_.toString(orderDetails.userID) !== requestorId) {
+    throw new Error("Unauthorized to delete this order");
   }
-  const deleting = await deleteOrderAction(orderID);
-  return deleting;
+  const result = await deleteOrderAction(orderID);
+  return result;
 }
 
 module.exports = {
   readOrderIDController,
+  filterOrdersByDateController,
+  filterOrdersByStateController,
   readOrdersController,
   createOrderController,
   updateOrderController,

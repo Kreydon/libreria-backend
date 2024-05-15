@@ -5,6 +5,18 @@ async function readOrderIDAction(data) {
   return order;
 }
 
+async function filterOrdersByDateAction(startDate, endDate) {
+  const orders = await Order.find({
+    createdAt: { $gte: new Date(startDate), $lte: new Date(endDate) },
+  }).lean();
+  return orders;
+}
+
+async function filterOrdersByStateAction(state) {
+  const orders = await Order.find({ state: state }).lean();
+  return orders;
+}
+
 async function readOrdersAction() {
   const orders = await Order.find();
   return orders;
@@ -36,6 +48,8 @@ async function deleteOrderAction(orderID) {
 
 module.exports = {
   readOrderIDAction,
+  filterOrdersByDateAction,
+  filterOrdersByStateAction,
   readOrdersAction,
   createOrderAction,
   updateOrderAction,

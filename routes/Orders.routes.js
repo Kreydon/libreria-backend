@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const {
   readOrderIDController,
+  filterOrdersByDateController,
+  filterOrdersByStateController,
   readOrdersController,
   createOrderController,
   updateOrderController,
@@ -12,6 +14,26 @@ async function getOrderIDRoute(req, res) {
   try {
     const order = await readOrderIDController(req.params.id);
     res.status(200).json({ ...order });
+  } catch (error) {
+    res.status(500).json({ mensaje: error.message });
+  }
+}
+
+async function getOrdersByDateRoute(req, res) {
+  try {
+    const { startDate, endDate } = req.query;
+    const orders = await filterOrdersByDateController(startDate, endDate);
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ mensaje: error.message });
+  }
+}
+
+async function getOrdersByStateRoute(req, res) {
+  try {
+    const { state } = req.query;
+    const orders = await filterOrdersByStateController(state);
+    res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ mensaje: error.message });
   }
@@ -90,6 +112,8 @@ async function deleteOrdersRoute(req, res) {
 }
 
 router.get("/:id", getOrderIDRoute);
+router.get('/orders/:date', getOrdersByDateRoute);
+router.get('/orders/:state', getOrdersByStateRoute);
 router.get("/", getOrdersRoute);
 router.post("/", postOrdersRoute);
 router.patch("/:id", patchOrdersRoute);
